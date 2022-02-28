@@ -42,10 +42,15 @@ mkPolicy :: PaymentPubKeyHash -> POSIXTime -> () -> ScriptContext -> Bool
 mkPolicy pkh deadline () ctx = True -- FIX ME!
 
 policy :: PaymentPubKeyHash -> POSIXTime -> Scripts.MintingPolicy
-policy pkh deadline = undefined -- IMPLEMENT ME!
+policy pkh deadline = mkMintingPolicyScript $ 
+    $$(PlutusTx.compile [|| (\pkh' deadline' -> Scripts.wrapMintingPolicy $ mkPolicy pkh' deadline') ||])
+    `PlutusTx.applyCode`
+    PlutusTx.liftCode pkh 
+    `PlutusTx.applyCode`
+    PlutusTx.liftCode deadline
 
 curSymbol :: PaymentPubKeyHash -> POSIXTime -> CurrencySymbol
-curSymbol pkh deadline = undefined -- IMPLEMENT ME!
+curSymbol pkh deadline = scriptCurrencySymbol $ policy pkh deadline
 
 data MintParams = MintParams
     { mpTokenName :: !TokenName
